@@ -16,6 +16,12 @@ func SetupRouter() http.Handler {
 	mux.HandleFunc("/api/projects", ProjectsHandler)
 	mux.HandleFunc("/api/projects/", ProjectDetailHandler)
 
+	// Local File System Browser & Direct Disk Injection
+	mux.HandleFunc("/api/fs/roots", GetFSRootsHandler)
+	mux.HandleFunc("/api/fs/browse", BrowseFSHandler)
+	mux.HandleFunc("/api/fs/create-dir", CreateFSDirHandler)
+	mux.HandleFunc("/api/fs/write-stack", WriteStackToDiskHandler)
+
 	// Generation & Audit
 	mux.HandleFunc("/api/generate/compose", GenerateComposeHandler)
 	mux.HandleFunc("/api/audit", AuditHandler)
@@ -25,6 +31,7 @@ func SetupRouter() http.Handler {
 
 	// Live Docker Bridge
 	mux.HandleFunc("/api/docker/deploy", DeployHandler)
+	mux.HandleFunc("/api/docker/deploy-at-path", DeployAtPathHandler)
 	mux.HandleFunc("/api/docker/stop", StopHandler)
 	mux.HandleFunc("/api/docker/ps", DockerPSHandler)
 

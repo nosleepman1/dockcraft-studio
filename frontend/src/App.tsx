@@ -12,11 +12,27 @@ import { DockerHubModal } from './components/sidebar/DockerHubModal';
 import { LiveLogConsole } from './components/terminal/LiveLogConsole';
 import { FloatingDock } from './components/toolbar/FloatingDock';
 import { CommandPalette } from './components/command/CommandPalette';
+import { WorkspaceSyncModal } from './components/workspace/WorkspaceSyncModal';
+import { DirectoryPickerModal } from './components/workspace/DirectoryPickerModal';
+import { ProjectsDashboard } from './components/dashboard/ProjectsDashboard';
 import { ToastContainer, toast } from './components/ui/Toast';
 import { useDockerStore } from './store/useDockerStore';
 
 export const App: React.FC = () => {
-  const { selectedServiceId, autoLayout, toggleTerminal, setActiveModal } = useDockerStore();
+  const { 
+    selectedServiceId, 
+    autoLayout, 
+    toggleTerminal, 
+    setActiveModal, 
+    isDashboardOpen,
+    openDashboard,
+    closeDashboard,
+    fetchSavedProjects
+  } = useDockerStore();
+
+  useEffect(() => {
+    fetchSavedProjects();
+  }, [fetchSavedProjects]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -26,13 +42,20 @@ export const App: React.FC = () => {
         return;
       }
 
-      if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        if (isDashboardOpen) closeDashboard();
+        else openDashboard();
+      } else if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         autoLayout();
         toast.info('Auto-Layout Applied');
       } else if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setActiveModal('templates');
+      } else if (e.key.toLowerCase() === 'w' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setActiveModal('workspace_sync');
       } else if (e.key === '`' || e.key === '~') {
         e.preventDefault();
         toggleTerminal();
@@ -41,7 +64,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [autoLayout, toggleTerminal, setActiveModal]);
+  }, [autoLayout, toggleTerminal, setActiveModal, isDashboardOpen, openDashboard, closeDashboard]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-theme-bg text-theme-text overflow-hidden select-none font-sans">
@@ -61,11 +84,18 @@ export const App: React.FC = () => {
         {selectedServiceId && <ServiceInspector />}
       </main>
 
+      {/* Projects & Multi-Flow Dashboard Hub */}
+      {isDashboardOpen && <ProjectsDashboard />}
+
       {/* Live Docker Terminal Console */}
       <LiveLogConsole />
 
       {/* Command Palette (Ctrl+K) */}
       <CommandPalette />
+
+      {/* Direct Disk Injection & Local Folder Navigation */}
+      <WorkspaceSyncModal />
+      <DirectoryPickerModal />
 
       {/* Micro-Animated Toast Notifications */}
       <ToastContainer />

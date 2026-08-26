@@ -15,7 +15,8 @@ import {
   Sparkles,
   Command,
   ArrowRight,
-  Box
+  Box,
+  FolderSync
 } from 'lucide-react';
 import { useDockerStore } from '../../store/useDockerStore';
 import { SERVICE_CATALOG } from '../../catalog/serviceCatalog';
@@ -81,7 +82,16 @@ export const CommandPalette: React.FC = () => {
 
   // Build items list
   const allItems: CommandItem[] = [
-    // --- Actions ---
+    {
+      id: 'act_sync_disk',
+      category: 'Action',
+      title: 'Sync & Inject Directly to Disk',
+      subtitle: 'Write docker-compose.yml and Dockerfiles directly into your project folder',
+      icon: FolderSync,
+      iconColor: '#06B6D4',
+      badge: 'Ctrl+W',
+      action: () => setActiveModal('workspace_sync')
+    },
     {
       id: 'act_export_zip',
       category: 'Action',

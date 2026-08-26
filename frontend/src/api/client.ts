@@ -17,6 +17,19 @@ export interface DockerHubItem {
   pullCount: string;
 }
 
+export interface FSDirEntry {
+  name: string;
+  path: string;
+  isDir: boolean;
+  modTime?: string;
+  isParent?: boolean;
+}
+
+export interface DiskFilePayload {
+  relativePath: string;
+  content: string;
+}
+
 export const api = {
   // Health & System
   getHealth: async (): Promise<{ status: string; service: string }> => {
@@ -31,6 +44,56 @@ export const api = {
     return res.json();
   },
 
+  // Local File System Navigation & Injection
+  getFSRoots: async (): Promise<FSDirEntry[]> => {
+    const res = await fetch(`${API_BASE_URL}/fs/roots`);
+    if (!res.ok) throw new Error('Failed to get FS roots');
+    return res.json();
+  },
+
+  browseFS: async (path?: string): Promise<{ currentPath: string; entries: FSDirEntry[] }> => {
+    const url = path ? `${API_BASE_URL}/fs/browse?path=${encodeURIComponent(path)}` : `${API_BASE_URL}/fs/browse`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to browse directory');
+    return res.json();
+  },
+
+  createFSDir: async (parentPath: string, dirName: string): Promise<{ success: boolean; path: string }> => {
+    const res = await fetch(`${API_BASE_URL}/fs/create-dir`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parentPath, dirName }),
+    });
+    if (!res.ok) throw new Error('Failed to create folder');
+    return res.json();
+  },
+
+  writeStackToDisk: async (targetPath: string, files: DiskFilePayload[]): Promise<{ success: boolean; targetPath: string; count: number; writtenFiles: string[] }> => {
+    const res = await fetch(`${API_BASE_URL}/fs/write-stack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetPath, files }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to write stack files to disk');
+    }
+    return res.json();
+  },
+
+  deployAtPath: async (targetPath: string): Promise<{ status: string; targetPath: string }> => {
+    const res = await fetch(`${API_BASE_URL}/docker/deploy-at-path`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetPath }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to deploy at specified path');
+    }
+    return res.json();
+  },
+
   // Projects CRUD
   listProjects: async (): Promise<Project[]> => {
     const res = await fetch(`${API_BASE_URL}/projects`);
@@ -42,7 +105,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/projects`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project),
+      body: JSON.stringify({ ...project, createdAt: new Date().toISOString() }),
     });
     if (!res.ok) throw new Error('Failed to save project');
     return res.json();

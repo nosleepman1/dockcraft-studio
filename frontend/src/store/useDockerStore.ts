@@ -7,18 +7,28 @@ import {
   applyEdgeChanges,
   MarkerType
 } from '@xyflow/react';
-import { DockerService, DockerNetwork, DockerVolume, Project } from '../types/docker';
+import { DockerService, DockerNetwork, DockerVolume, Project, ProjectFlow } from '../types/docker';
 import { DockerCanvasNode, DockerCanvasEdge } from '../types/graph';
 import { CatalogItem, SERVICE_CATALOG } from '../catalog/serviceCatalog';
 import { ARCHITECTURE_TEMPLATES } from '../catalog/templates';
 import { autoWireServices } from '../engine/autoWiring';
 import { parseDockerComposeYaml, parseDockerRunCommand } from '../engine/composeParser';
+import { generateDockerComposeYaml } from '../engine/composeGenerator';
+import { generateDockerfileForService } from '../engine/dockerfileGenerator';
+import { generateNginxConfig } from '../engine/nginxGenerator';
+import { generateEnvFiles } from '../engine/envGenerator';
+import { generateStartScriptSh, generateStartScriptPs1, generateReadmeMd } from '../engine/scriptGenerator';
 import { ThemeMode, applyTheme, getInitialTheme } from '../themes/themeConfig';
-import { api, SystemStatus } from '../api/client';
+import { api, SystemStatus, DiskFilePayload } from '../api/client';
 import { LogMessage } from '../api/websocket';
+import { toast } from '../components/ui/Toast';
 
 interface DockerState {
   projectName: string;
+  currentProjectId: string;
+  currentFlowId: string;
+  isDashboardOpen: boolean;
+
   services: DockerService[];
   networks: DockerNetwork[];
   volumes: DockerVolume[];
@@ -28,6 +38,10 @@ interface DockerState {
   
   // Themes
   currentTheme: ThemeMode;
+
+  // Local Workspace & Direct Disk Injection
+  targetProjectPath: string;
+  serviceTargetFolders: Record<string, string>;
 
   // Backend & Docker Runtime Integration
   isBackendConnected: boolean;
@@ -39,13 +53,26 @@ interface DockerState {
   savedProjects: Project[];
 
   // Modals & Tabs
-  activeModal: 'preview' | 'templates' | 'import' | 'security' | 'projects' | 'dockerhub' | null;
+  activeModal: 'preview' | 'templates' | 'import' | 'security' | 'projects' | 'dockerhub' | 'workspace_sync' | 'directory_picker' | null;
   activePreviewTab: 'compose' | 'dockerfile' | 'nginx' | 'env' | 'scripts' | 'readme';
   previewSelectedServiceId: string | null;
+
+  // Dashboard & Multi-Project / Multi-Flow Actions
+  openDashboard: () => void;
+  closeDashboard: () => void;
+  createNewProject: (name: string, templateId?: string) => string;
+  switchProject: (projectId: string) => void;
+  duplicateProject: (projectId: string) => void;
+  deleteProject: (projectId: string) => Promise<void>;
+  switchFlow: (flowId: string) => void;
+  createFlow: (flowName: string) => void;
+  deleteFlow: (flowId: string) => void;
 
   // Actions
   setTheme: (theme: ThemeMode) => void;
   setProjectName: (name: string) => void;
+  setTargetProjectPath: (path: string) => void;
+  setServiceTargetFolder: (serviceId: string, folder: string) => void;
   selectService: (serviceId: string | null) => void;
   setActiveModal: (modal: DockerState['activeModal']) => void;
   setActivePreviewTab: (tab: DockerState['activePreviewTab']) => void;
@@ -53,6 +80,10 @@ interface DockerState {
   toggleTerminal: () => void;
   clearLogs: () => void;
   addLogMessage: (msg: LogMessage) => void;
+
+  // Direct Disk Injection & Run
+  injectStackToDisk: () => Promise<boolean>;
+  deployStackAtCustomPath: () => Promise<void>;
 
   // Backend calls
   checkBackendHealth: () => Promise<void>;
@@ -164,8 +195,45 @@ export const useDockerStore = create<DockerState>((set, get) => {
 
   const { edges: initialEdges } = syncNodesAndEdges(starterServices, initialNodes, []);
 
+  const defaultProjectPath = 'C:\\Users\\abash\\Desktop\\dockcraft-studio';
+
+  const defaultServiceFolders: Record<string, string> = {
+    svc_next: 'frontend',
+    svc_api: 'backend',
+  };
+
+  const initialProject: Project = {
+    id: 'proj_default',
+    name: 'Fullstack Monorepo',
+    description: 'Next.js + FastAPI + PostgreSQL + Redis',
+    activeFlowId: 'dev',
+    flows: [
+      {
+        id: 'dev',
+        name: 'development',
+        services: starterServices,
+        targetProjectPath: defaultProjectPath,
+        serviceTargetFolders: defaultServiceFolders
+      },
+      {
+        id: 'prod',
+        name: 'production',
+        services: starterServices,
+        targetProjectPath: defaultProjectPath,
+        serviceTargetFolders: defaultServiceFolders
+      }
+    ],
+    services: starterServices,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   return {
-    projectName: 'dockcraft-app',
+    projectName: 'Fullstack Monorepo',
+    currentProjectId: 'proj_default',
+    currentFlowId: 'dev',
+    isDashboardOpen: false,
+
     services: starterServices,
     networks: initialNetworks,
     volumes: initialVolumes,
@@ -175,24 +243,246 @@ export const useDockerStore = create<DockerState>((set, get) => {
 
     currentTheme: initialTheme,
 
+    targetProjectPath: defaultProjectPath,
+    serviceTargetFolders: defaultServiceFolders,
+
     isBackendConnected: false,
     systemStatus: null,
     isDeploying: false,
     isStackRunning: false,
     isTerminalOpen: false,
     liveLogs: [],
-    savedProjects: [],
+    savedProjects: [initialProject],
 
     activeModal: null,
     activePreviewTab: 'compose',
     previewSelectedServiceId: null,
+
+    openDashboard: () => {
+      get().fetchSavedProjects();
+      set({ isDashboardOpen: true });
+    },
+    closeDashboard: () => set({ isDashboardOpen: false }),
+
+    createNewProject: (name, templateId) => {
+      const newId = `proj_${Date.now()}`;
+      let newServices: DockerService[] = [];
+
+      if (templateId) {
+        const tpl = ARCHITECTURE_TEMPLATES.find(t => t.id === templateId);
+        if (tpl) {
+          newServices = JSON.parse(JSON.stringify(tpl.services));
+        }
+      }
+
+      const defaultFlow: ProjectFlow = {
+        id: 'dev',
+        name: 'development',
+        services: newServices,
+        targetProjectPath: defaultProjectPath,
+        serviceTargetFolders: {}
+      };
+
+      const newProj: Project = {
+        id: newId,
+        name,
+        description: `${newServices.length} containers`,
+        activeFlowId: 'dev',
+        flows: [defaultFlow],
+        services: newServices,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const newNodes: DockerCanvasNode[] = newServices.map((s, idx) => ({
+        id: s.id,
+        type: 'serviceNode',
+        position: { x: 100 + (idx % 3) * 320, y: 100 + Math.floor(idx / 3) * 260 },
+        data: { service: s }
+      }));
+      const { edges } = syncNodesAndEdges(newServices, newNodes, []);
+
+      set(state => ({
+        currentProjectId: newId,
+        currentFlowId: 'dev',
+        projectName: name,
+        services: newServices,
+        nodes: newNodes,
+        edges,
+        savedProjects: [newProj, ...state.savedProjects],
+        selectedServiceId: null,
+      }));
+
+      get().saveProjectToBackend();
+      return newId;
+    },
+
+    switchProject: (projectId) => {
+      const { savedProjects } = get();
+      const proj = savedProjects.find(p => p.id === projectId);
+      if (!proj) return;
+
+      const activeFlow = proj.flows?.find(f => f.id === proj.activeFlowId) || proj.flows?.[0] || {
+        id: 'dev',
+        name: 'dev',
+        services: proj.services || []
+      };
+
+      const currentServices = activeFlow.services || proj.services || [];
+      const newNodes: DockerCanvasNode[] = currentServices.map((s, idx) => ({
+        id: s.id,
+        type: 'serviceNode',
+        position: { x: 100 + (idx % 3) * 320, y: 100 + Math.floor(idx / 3) * 260 },
+        data: { service: s }
+      }));
+      const { edges } = syncNodesAndEdges(currentServices, newNodes, []);
+
+      set({
+        currentProjectId: proj.id,
+        projectName: proj.name,
+        currentFlowId: activeFlow.id,
+        services: currentServices,
+        nodes: newNodes,
+        edges,
+        targetProjectPath: activeFlow.targetProjectPath || defaultProjectPath,
+        serviceTargetFolders: activeFlow.serviceTargetFolders || {},
+        selectedServiceId: null,
+        isDashboardOpen: false,
+      });
+
+      get().autoLayout();
+      toast.info('Switched Project', proj.name);
+    },
+
+    duplicateProject: (projectId) => {
+      const { savedProjects } = get();
+      const orig = savedProjects.find(p => p.id === projectId);
+      if (!orig) return;
+
+      const clone: Project = JSON.parse(JSON.stringify(orig));
+      clone.id = `proj_${Date.now()}`;
+      clone.name = `${orig.name} (Copy)`;
+      clone.createdAt = new Date().toISOString();
+      clone.updatedAt = new Date().toISOString();
+
+      set(state => ({
+        savedProjects: [clone, ...state.savedProjects]
+      }));
+
+      api.saveProject(clone);
+      toast.success('Project Duplicated', clone.name);
+    },
+
+    deleteProject: async (projectId) => {
+      await api.deleteProject(projectId);
+      set(state => ({
+        savedProjects: state.savedProjects.filter(p => p.id !== projectId)
+      }));
+      toast.info('Project Deleted');
+    },
+
+    switchFlow: (flowId) => {
+      const { currentProjectId, savedProjects, services, targetProjectPath, serviceTargetFolders } = get();
+      const proj = savedProjects.find(p => p.id === currentProjectId);
+      if (!proj) return;
+
+      // Save current flow before switching
+      const updatedFlows = (proj.flows || []).map(f => {
+        if (f.id === get().currentFlowId) {
+          return { ...f, services, targetProjectPath, serviceTargetFolders };
+        }
+        return f;
+      });
+
+      const targetFlow = updatedFlows.find(f => f.id === flowId);
+      if (!targetFlow) return;
+
+      const flowServices = targetFlow.services || [];
+      const newNodes: DockerCanvasNode[] = flowServices.map((s, idx) => ({
+        id: s.id,
+        type: 'serviceNode',
+        position: { x: 100 + (idx % 3) * 320, y: 100 + Math.floor(idx / 3) * 260 },
+        data: { service: s }
+      }));
+      const { edges } = syncNodesAndEdges(flowServices, newNodes, []);
+
+      proj.flows = updatedFlows;
+      proj.activeFlowId = flowId;
+
+      set({
+        currentFlowId: flowId,
+        services: flowServices,
+        nodes: newNodes,
+        edges,
+        targetProjectPath: targetFlow.targetProjectPath || targetProjectPath,
+        serviceTargetFolders: targetFlow.serviceTargetFolders || {},
+        selectedServiceId: null,
+      });
+
+      toast.info(`Flow: ${targetFlow.name.toUpperCase()}`);
+    },
+
+    createFlow: (flowName) => {
+      const { currentProjectId, savedProjects, services, targetProjectPath, serviceTargetFolders } = get();
+      const proj = savedProjects.find(p => p.id === currentProjectId);
+      if (!proj) return;
+
+      const newFlowId = `flow_${Date.now().toString(36)}`;
+      const newFlow: ProjectFlow = {
+        id: newFlowId,
+        name: flowName,
+        services: JSON.parse(JSON.stringify(services)),
+        targetProjectPath,
+        serviceTargetFolders: { ...serviceTargetFolders }
+      };
+
+      const updatedFlows = [...(proj.flows || []), newFlow];
+      proj.flows = updatedFlows;
+
+      set({
+        currentFlowId: newFlowId,
+      });
+
+      get().saveProjectToBackend();
+      toast.success(`Flow Created: ${flowName}`);
+    },
+
+    deleteFlow: (flowId) => {
+      const { currentProjectId, savedProjects } = get();
+      const proj = savedProjects.find(p => p.id === currentProjectId);
+      if (!proj || !proj.flows || proj.flows.length <= 1) {
+        toast.warning('Cannot delete the last remaining flow');
+        return;
+      }
+
+      proj.flows = proj.flows.filter(f => f.id !== flowId);
+      if (proj.flows.length > 0) {
+        get().switchFlow(proj.flows[0].id);
+      }
+    },
 
     setTheme: (theme) => {
       applyTheme(theme);
       set({ currentTheme: theme });
     },
 
-    setProjectName: (name) => set({ projectName: name }),
+    setProjectName: (name) => {
+      const { currentProjectId, savedProjects } = get();
+      set({ projectName: name });
+      const proj = savedProjects.find(p => p.id === currentProjectId);
+      if (proj) {
+        proj.name = name;
+        get().saveProjectToBackend();
+      }
+    },
+
+    setTargetProjectPath: (path) => set({ targetProjectPath: path }),
+    setServiceTargetFolder: (serviceId, folder) => {
+      set(state => ({
+        serviceTargetFolders: { ...state.serviceTargetFolders, [serviceId]: folder }
+      }));
+    },
+
     selectService: (serviceId) => set({ selectedServiceId: serviceId }),
     setActiveModal: (modal) => set({ activeModal: modal }),
     setActivePreviewTab: (tab) => set({ activePreviewTab: tab }),
@@ -200,6 +490,85 @@ export const useDockerStore = create<DockerState>((set, get) => {
     toggleTerminal: () => set(state => ({ isTerminalOpen: !state.isTerminalOpen })),
     clearLogs: () => set({ liveLogs: [] }),
     addLogMessage: (msg) => set(state => ({ liveLogs: [...state.liveLogs.slice(-300), msg] })),
+
+    injectStackToDisk: async (): Promise<boolean> => {
+      const { services, targetProjectPath, serviceTargetFolders } = get();
+      if (!targetProjectPath) {
+        toast.error('No Destination Folder', 'Please select a local folder path first');
+        return false;
+      }
+
+      try {
+        const files: DiskFilePayload[] = [];
+
+        // 1. docker-compose.yml
+        files.push({
+          relativePath: 'docker-compose.yml',
+          content: generateDockerComposeYaml(services)
+        });
+
+        // 2. .env and .env.example
+        const { envContent, envExampleContent } = generateEnvFiles(services);
+        files.push({ relativePath: '.env', content: envContent });
+        files.push({ relativePath: '.env.example', content: envExampleContent });
+
+        // 3. Nginx config
+        const hasGateway = services.some(s => s.category === 'gateway' || s.image?.includes('nginx'));
+        const hasFrontAndBack = services.some(s => s.category === 'backend') && services.some(f => f.category === 'frontend');
+        if (hasGateway || hasFrontAndBack) {
+          files.push({
+            relativePath: 'nginx/nginx.conf',
+            content: generateNginxConfig(services)
+          });
+        }
+
+        // 4. Custom services Dockerfiles
+        services.filter(s => s.isCustomBuild).forEach(s => {
+          const folder = serviceTargetFolders[s.id] || s.name;
+          const generated = generateDockerfileForService(s);
+          files.push({
+            relativePath: `${folder}/Dockerfile`,
+            content: generated.dockerfileContent
+          });
+          files.push({
+            relativePath: `${folder}/.dockerignore`,
+            content: generated.dockerignoreContent
+          });
+        });
+
+        // 5. Scripts & README
+        files.push({ relativePath: 'start.sh', content: generateStartScriptSh(services) });
+        files.push({ relativePath: 'start.ps1', content: generateStartScriptPs1(services) });
+        files.push({ relativePath: 'README.md', content: generateReadmeMd(services) });
+
+        const result = await api.writeStackToDisk(targetProjectPath, files);
+        toast.success(`Injected ${result.count} Files!`, `Written directly into ${targetProjectPath}`);
+        return true;
+      } catch (err: any) {
+        toast.error('Injection Failed', err.message || String(err));
+        return false;
+      }
+    },
+
+    deployStackAtCustomPath: async () => {
+      const { targetProjectPath, injectStackToDisk } = get();
+      set({ isDeploying: true, isTerminalOpen: true });
+
+      const injected = await injectStackToDisk();
+      if (!injected) {
+        set({ isDeploying: false });
+        return;
+      }
+
+      try {
+        await api.deployAtPath(targetProjectPath);
+        set({ isDeploying: false, isStackRunning: true });
+        toast.success('Stack Running', `Docker Compose started in ${targetProjectPath}`);
+      } catch (err: any) {
+        set({ isDeploying: false });
+        toast.error('Deploy Failed', err.message || String(err));
+      }
+    },
 
     checkBackendHealth: async () => {
       try {
@@ -243,14 +612,24 @@ export const useDockerStore = create<DockerState>((set, get) => {
     },
 
     saveProjectToBackend: async () => {
-      const { projectName, services } = get();
+      const { projectName, currentProjectId, currentFlowId, services, savedProjects, targetProjectPath, serviceTargetFolders } = get();
       try {
-        await api.saveProject({
+        const proj = savedProjects.find(p => p.id === currentProjectId) || {
+          id: currentProjectId,
           name: projectName,
           description: `Architecture with ${services.length} services`,
+          activeFlowId: currentFlowId,
+          flows: [{ id: currentFlowId, name: currentFlowId, services, targetProjectPath, serviceTargetFolders }],
           services,
-        });
-        await get().fetchSavedProjects();
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        proj.name = projectName;
+        proj.services = services;
+        proj.updatedAt = new Date().toISOString();
+
+        await api.saveProject(proj);
       } catch (err) {
         console.error('Failed to save project:', err);
       }
@@ -259,31 +638,16 @@ export const useDockerStore = create<DockerState>((set, get) => {
     fetchSavedProjects: async () => {
       try {
         const list = await api.listProjects();
-        set({ savedProjects: list });
+        if (list && list.length > 0) {
+          set({ savedProjects: list });
+        }
       } catch (_) {}
     },
 
     loadProjectFromBackend: async (id: string) => {
       try {
         const p = await api.getProject(id);
-        const newNodes: DockerCanvasNode[] = p.services.map((s, idx) => ({
-          id: s.id,
-          type: 'serviceNode',
-          position: { x: 100 + (idx % 3) * 320, y: 100 + Math.floor(idx / 3) * 260 },
-          data: { service: s }
-        }));
-        const { edges } = syncNodesAndEdges(p.services, newNodes, []);
-
-        set({
-          projectName: p.name,
-          services: p.services,
-          nodes: newNodes,
-          edges,
-          selectedServiceId: null,
-          activeModal: null,
-        });
-
-        get().autoLayout();
+        get().switchProject(p.id);
       } catch (err) {
         console.error('Failed to load project:', err);
       }
@@ -310,7 +674,7 @@ export const useDockerStore = create<DockerState>((set, get) => {
 
       if (!sourceService || !targetService) return;
 
-      const { updatedSource, updatedTarget } = autoWireServices(sourceService, targetService);
+      const { updatedSource, updatedTarget, connectionDescription } = autoWireServices(sourceService, targetService);
 
       const updatedServices = services.map(s => {
         if (s.id === updatedSource.id) return updatedSource;
@@ -325,6 +689,8 @@ export const useDockerStore = create<DockerState>((set, get) => {
         nodes: synced.nodes,
         edges: synced.edges,
       });
+
+      toast.info('Auto-Wired Connection', connectionDescription);
     },
 
     addServiceFromCatalog: (catalogItem, position) => {

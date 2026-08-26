@@ -15,7 +15,10 @@ import {
   Shield, 
   Trash2, 
   Copy, 
-  CheckCircle2
+  CheckCircle2,
+  Flame,
+  Layers,
+  Compass
 } from 'lucide-react';
 import { DockerCanvasNode } from '../../types/graph';
 import { useDockerStore } from '../../store/useDockerStore';
@@ -34,6 +37,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Zap,
   Cpu,
   Shield,
+  Flame,
+  Layers,
+  Compass
 };
 
 export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
@@ -67,16 +73,34 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
       }}
       className={`relative group w-64 rounded-2xl transition-all duration-200 cursor-pointer backdrop-blur-xl select-none ${
         isCurrentSelected
-          ? 'bg-theme-card border-2 border-theme-accent shadow-2xl scale-[1.02]'
-          : 'bg-theme-card/90 border border-theme-border/80 hover:border-theme-accent/50 hover:shadow-xl hover:scale-[1.01]'
+          ? 'bg-theme-card border-2 border-theme-accent shadow-2xl scale-[1.02] ring-4 ring-theme-accent/20'
+          : 'bg-theme-card/95 border border-theme-border/90 hover:border-theme-accent/60 hover:shadow-xl hover:scale-[1.01]'
       }`}
     >
-      {/* Target Connection Handle (Left) */}
+      {/* Target Handle (Left) - Inbound connections */}
       <Handle
         type="target"
         position={Position.Left}
-        id="target"
-        className="!w-3 !h-3 !bg-theme-accent !border-2 !border-theme-bg hover:!scale-150 transition-transform !-left-1.5"
+        id="target-left"
+        className="!w-4 !h-4 !bg-cyan-400 !border-2 !border-theme-bg shadow-md !-left-2 transition-all hover:!scale-150 hover:!bg-cyan-300 ring-2 ring-cyan-400/30"
+        title="Connect input (Drag wire here)"
+      />
+
+      {/* Dual Source Handle (Left) */}
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="source-left"
+        className="!w-4 !h-4 !bg-cyan-400 !border-2 !border-theme-bg !opacity-0 !-left-2 pointer-events-none"
+      />
+
+      {/* Target Handle (Top) */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="target-top"
+        className="!w-3.5 !h-3.5 !bg-theme-accent !border-2 !border-theme-bg shadow-md !-top-1.5 transition-all opacity-0 group-hover:opacity-100 hover:!scale-150"
+        title="Connect input (Top)"
       />
 
       {/* Card Header */}
@@ -84,7 +108,7 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         <div className="flex items-center space-x-2.5 min-w-0">
           <div 
             className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 shadow-inner"
-            style={{ backgroundColor: `${service.color || '#3B82F6'}20`, color: service.color || '#3B82F6' }}
+            style={{ backgroundColor: `${service.color || '#3B82F6'}25`, color: service.color || '#3B82F6' }}
           >
             <IconComponent className="w-3.5 h-3.5" />
           </div>
@@ -102,14 +126,14 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleDuplicate}
-            title="Duplicate"
+            title="Duplicate service"
             className="p-1 text-theme-muted hover:text-theme-text hover:bg-theme-hover rounded-lg transition-colors"
           >
             <Copy className="w-3 h-3" />
           </button>
           <button
             onClick={handleDelete}
-            title="Delete"
+            title="Delete service"
             className="p-1 text-theme-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
           >
             <Trash2 className="w-3 h-3" />
@@ -117,7 +141,7 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         </div>
       </div>
 
-      {/* Card Body - Ultra-Clean Metrics & Pills */}
+      {/* Card Body - Metrics & Pills */}
       <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono text-theme-muted">
         {/* Source image / dockerfile pill */}
         <div className="flex items-center gap-1.5 truncate mr-2">
@@ -160,12 +184,30 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         )}
       </div>
 
-      {/* Source Connection Handle (Right) */}
+      {/* Target Handle (Bottom) */}
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="target-bottom"
+        className="!w-3.5 !h-3.5 !bg-theme-accent !border-2 !border-theme-bg shadow-md !-bottom-1.5 transition-all opacity-0 group-hover:opacity-100 hover:!scale-150"
+        title="Connect input (Bottom)"
+      />
+
+      {/* Source Handle (Right) - Outbound connections */}
       <Handle
         type="source"
         position={Position.Right}
-        id="source"
-        className="!w-3 !h-3 !bg-theme-accent !border-2 !border-theme-bg hover:!scale-150 transition-transform !-right-1.5"
+        id="source-right"
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-theme-bg shadow-md !-right-2 transition-all hover:!scale-150 hover:!bg-blue-400 ring-2 ring-blue-500/30 animate-pulse"
+        title="Drag wire to connect with another container (e.g. Database / API)"
+      />
+
+      {/* Dual Target Handle (Right) */}
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="target-right"
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-theme-bg !opacity-0 !-right-2 pointer-events-none"
       />
     </div>
   );

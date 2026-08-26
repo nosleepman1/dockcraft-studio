@@ -63,7 +63,7 @@ export interface DockerService {
   isCustomBuild: boolean;
   buildContext?: string;
   dockerfilePath?: string;
-  dockerfileType?: 'nodejs' | 'python-fastapi' | 'python-flask' | 'go' | 'rust' | 'java-spring' | 'php-laravel' | 'nextjs' | 'react-vite' | 'custom';
+  dockerfileType?: 'nodejs' | 'python-fastapi' | 'python-flask' | 'go' | 'rust' | 'java-spring' | 'springboot' | 'java' | 'php-laravel' | 'laravel' | 'php' | 'nextjs' | 'react-vite' | 'angular' | 'vuejs' | 'nestjs' | 'django' | 'custom';
   customDockerfileContent?: string;
 
   // Networking & Ports
@@ -130,11 +130,24 @@ export interface ArchitectureTemplate {
   connections: { sourceId: string; targetId: string; type?: string }[];
 }
 
+export interface ProjectFlow {
+  id: string;
+  name: string; // 'development' | 'production' | 'staging' | custom
+  services: DockerService[];
+  networks?: DockerNetwork[];
+  volumes?: DockerVolume[];
+  targetProjectPath?: string;
+  serviceTargetFolders?: Record<string, string>;
+}
+
 export interface Project {
   id: string;
   name: string;
-  description: string;
+  description?: string;
+  activeFlowId?: string;
+  flows?: ProjectFlow[];
   services: DockerService[];
   createdAt: string;
   updatedAt: string;
 }
+

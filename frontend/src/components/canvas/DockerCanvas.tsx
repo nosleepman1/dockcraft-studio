@@ -8,12 +8,14 @@ import {
   useReactFlow,
   ReactFlowProvider,
   NodeTypes,
+  ConnectionLineType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { useDockerStore } from '../../store/useDockerStore';
 import { CustomServiceNode } from './CustomServiceNode';
 import { SERVICE_CATALOG } from '../../catalog/serviceCatalog';
+import { toast } from '../ui/Toast';
 
 const DockerCanvasInner: React.FC = () => {
   const {
@@ -53,6 +55,7 @@ const DockerCanvasInner: React.FC = () => {
       });
 
       addServiceFromCatalog(catalogItem, position);
+      toast.success('Service Added', catalogItem.displayName);
     },
     [screenToFlowPosition, addServiceFromCatalog]
   );
@@ -73,10 +76,18 @@ const DockerCanvasInner: React.FC = () => {
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}
         maxZoom={2}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineStyle={{
+          stroke: '#06B6D4',
+          strokeWidth: 3,
+          strokeDasharray: '6 6'
+        }}
         defaultEdgeOptions={{
           animated: true,
           style: { strokeWidth: 2.5 },
+          type: 'smoothstep'
         }}
+        deleteKeyCode={['Backspace', 'Delete']}
       >
         <Background
           variant={BackgroundVariant.Dots}

@@ -99,14 +99,25 @@ type DockerService struct {
 	Notes                   string          `json:"notes,omitempty"`
 }
 
-// Project represents a stored stack project
+// ProjectFlow represents an environment flow (dev, staging, prod, etc.)
+type ProjectFlow struct {
+	ID                   string            `json:"id"`
+	Name                 string            `json:"name"`
+	Services             []DockerService   `json:"services"`
+	TargetProjectPath    string            `json:"targetProjectPath,omitempty"`
+	ServiceTargetFolders map[string]string `json:"serviceTargetFolders,omitempty"`
+}
+
+// Project represents a stored stack project with multi-flows
 type Project struct {
-	ID          string          `json:"id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Services    []DockerService `json:"services"`
-	CreatedAt   time.Time       `json:"createdAt"`
-	UpdatedAt   time.Time       `json:"updatedAt"`
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	Description  string          `json:"description"`
+	ActiveFlowID string          `json:"activeFlowId,omitempty"`
+	Flows        []ProjectFlow   `json:"flows,omitempty"`
+	Services     []DockerService `json:"services"`
+	CreatedAt    time.Time       `json:"createdAt"`
+	UpdatedAt    time.Time       `json:"updatedAt"`
 }
 
 // SecurityIssue represents an issue detected by the linter

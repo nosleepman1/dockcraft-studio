@@ -10,7 +10,8 @@ import {
   ShieldCheck, 
   Upload, 
   Loader2,
-  FolderArchive
+  FolderArchive,
+  FolderSync
 } from 'lucide-react';
 import { useDockerStore } from '../../store/useDockerStore';
 import { runSecurityAndArchitectureAudit } from '../../engine/securityLinter';
@@ -63,6 +64,16 @@ export const FloatingDock: React.FC = () => {
       </button>
 
       <div className="w-px h-5 bg-theme-border mx-0.5" />
+
+      {/* Workspace Disk Sync / Inject */}
+      <button
+        onClick={() => setActiveModal('workspace_sync')}
+        className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition-colors"
+        title="Direct Disk Injection & Placement"
+      >
+        <FolderSync className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Sync Disk</span>
+      </button>
 
       {/* Auto Layout */}
       <button

@@ -176,6 +176,51 @@ func (e *DockerEngine) GetContainerStatus() (string, error) {
 	return string(out), nil
 }
 
+func (e *DockerEngine) BroadcastLog(line string) {
+	e.broadcast(line)
+}
+
+// DeployAtPath executes docker compose up in a custom path
+func (e *DockerEngine) DeployAtPath(targetPath string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.broadcast(fmt.Sprintf("[DockCraft Engine] 🚀 Initiating 'docker compose up -d' in %s...", targetPath))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	e.cancelFunc = cancel
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "up", "-d", "--build")
+	cmd.Dir = targetPath
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		e.broadcast(fmt.Sprintf("[DockCraft Engine] ❌ Failed to start command: %v", err))
+		return err
+	}
+
+	go e.streamPipe(stdout, "[stdout]")
+	go e.streamPipe(stderr, "[stderr]")
+
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			e.broadcast(fmt.Sprintf("[DockCraft Engine] ❌ Deployment finished with status: %v", err))
+		} else {
+			e.broadcast(fmt.Sprintf("[DockCraft Engine] ✅ Stack successfully started in %s!", targetPath))
+		}
+	}()
+
+	return nil
+}
+
 func (e *DockerEngine) streamPipe(r io.Reader, prefix string) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -183,3 +228,4 @@ func (e *DockerEngine) streamPipe(r io.Reader, prefix string) {
 		e.broadcast(fmt.Sprintf("%s %s", prefix, line))
 	}
 }
+
