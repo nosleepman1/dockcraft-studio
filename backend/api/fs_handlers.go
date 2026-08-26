@@ -265,3 +265,83 @@ func DeployAtPathHandler(w http.ResponseWriter, r *http.Request) {
 		"targetPath": targetPath,
 	})
 }
+<<<<<<< HEAD
+=======
+
+// ScanProjectHandler scans a repository folder and returns auto-discovered architecture
+func ScanProjectHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Path string `json:"path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	targetPath := strings.TrimSpace(req.Path)
+	if targetPath == "" {
+		home, _ := os.UserHomeDir()
+		targetPath = home
+	}
+
+	result, err := services.ScanProjectDirectory(targetPath)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("Failed to scan directory: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+// DockerStatsHandler returns real-time CPU and RAM statistics for active containers
+func DockerStatsHandler(w http.ResponseWriter, r *http.Request) {
+	stats, err := services.GetContainerMetrics()
+	if err != nil {
+		writeJSON(w, http.StatusOK, []services.ContainerStat{})
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// RestartContainerHandler restarts a specific container
+func RestartContainerHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	if err := services.RestartContainer(req.Name); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to restart container: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"name":    req.Name,
+		"message": fmt.Sprintf("Container %s restarted successfully", req.Name),
+	})
+}
+
+// ContainerLogsHandler fetches isolated logs for a container
+func ContainerLogsHandler(w http.ResponseWriter, r *http.Request) {
+	containerName := r.URL.Query().Get("name")
+	if containerName == "" {
+		writeError(w, http.StatusBadRequest, "Container name required")
+		return
+	}
+
+	logs, err := services.GetContainerSpecificLogs(containerName, 200)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch logs: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"container": containerName,
+		"logs":      logs,
+	})
+}
+>>>>>>> 34d6cc3 (feat(backend): implement high-performance Go REST engine, security headers, scanner, docker stats & WebSocket log streamer)
