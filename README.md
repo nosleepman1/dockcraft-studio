@@ -1,4 +1,4 @@
-# DockCraft Studio (Monorepo)
+# DockCraft Studio
 
 **Visual Docker & Infrastructure Studio** avec **Backend Go (Golang 1.26)** ultra-robuste et **Frontend React 18 / Vite** avec **6 Thèmes Dynamiques** (dont **Noir OLED Pur `#000000`** et **Blanc Épuré**).
 
