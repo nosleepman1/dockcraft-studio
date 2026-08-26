@@ -12,11 +12,8 @@ if (-not $RootPath) { $RootPath = Get-Location }
 # 1. Run Go Tests
 Write-Host "`n[1/2] ⚙️ Running Backend Go Tests..." -ForegroundColor Yellow
 Set-Location "$RootPath\backend"
-<<<<<<< HEAD
-=======
 $env:GOTMPDIR = "$RootPath\backend\.tmp"
 if (-not (Test-Path "$RootPath\backend\.tmp")) { New-Item -ItemType Directory -Force -Path "$RootPath\backend\.tmp" | Out-Null }
->>>>>>> b01d9dd (chore: initial project structure and repository scaffolding)
 go test -v ./tests/...
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Backend Go tests failed!" -ForegroundColor Red
