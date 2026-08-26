@@ -1,0 +1,28 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Builds
+dist/
+build/
+bin/
+
+# Environment and logs
+.env
+.env.local
+.env.*.local
+*.log
+.dockcraft/
+
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,16 @@
+{
+  "name": "dockcraft-studio-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Visual Docker & Infrastructure Studio - Monorepo (Go Backend + React Frontend)",
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start-dev.ps1",
+    "dev:front": "cd frontend && npm run dev",
+    "dev:back": "cd backend && go run main.go",
+    "test": "powershell -ExecutionPolicy Bypass -File ./scripts/test-all.ps1",
+    "test:back": "cd backend && go test -v ./tests/...",
+    "test:front": "cd frontend && npm test",
+    "build:front": "cd frontend && npm run build",
+    "build:back": "cd backend && go build -o bin/dockcraft.exe main.go"
+  }
+}
