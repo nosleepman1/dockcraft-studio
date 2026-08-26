@@ -8,6 +8,12 @@ yarn-error.log*
 dist/
 build/
 bin/
+<<<<<<< HEAD
+=======
+.tmp/
+backend/.tmp/
+coverage/
+>>>>>>> b01d9dd (chore: initial project structure and repository scaffolding)
 
 # Environment and logs
 .env

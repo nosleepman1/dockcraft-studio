@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DockCraft Studio
 
 **Visual Docker & Infrastructure Studio** avec **Backend Go (Golang 1.26)** ultra-robuste et **Frontend React 18 / Vite** avec **6 Thèmes Dynamiques** (dont **Noir OLED Pur `#000000`** et **Blanc Épuré**).
@@ -12,6 +13,15 @@
 ---
 
 ## Structure du Monorepo
+=======
+# 🚀 DockCraft Studio (Monorepo)
+
+**Visual Docker & Infrastructure Studio** avec **Backend Go (Golang 1.26)** ultra-robuste et **Frontend React 18 / Vite** avec **6 Thèmes Dynamiques** (dont **Noir OLED Pur `#000000`** et **Blanc Épuré**).
+
+---
+
+## 🏛️ Structure du Monorepo
+>>>>>>> b01d9dd (chore: initial project structure and repository scaffolding)
 
 * **`backend/`** : Moteur Go haute performance
   * Interaction directe avec le CLI Docker (`docker compose up / down / ps / logs`)
@@ -30,7 +40,11 @@
 
 ---
 
+<<<<<<< HEAD
 ## Démarrage Rapide
+=======
+## ⚡ Démarrage Rapide
+>>>>>>> b01d9dd (chore: initial project structure and repository scaffolding)
 
 ### Option 1 : Lancement 1-Clic (Windows PowerShell)
 ```powershell
@@ -59,7 +73,11 @@ npm run dev
 
 ---
 
+<<<<<<< HEAD
 ## Exécution des Tests
+=======
+## 🧪 Exécution des Tests
+>>>>>>> b01d9dd (chore: initial project structure and repository scaffolding)
 
 ```powershell
 # Exécute tous les tests (Go + Vitest)
