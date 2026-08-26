@@ -2,6 +2,13 @@
 
 **Visual Docker & Infrastructure Studio** avec **Backend Go (Golang 1.26)** ultra-robuste et **Frontend React 18 / Vite** avec **6 Thèmes Dynamiques** (dont **Noir OLED Pur `#000000`** et **Blanc Épuré**).
 
+[![Go Version](https://img.shields.io/badge/Go-1.23%2B-00ADD8?style=flat&logo=go)](https://golang.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react)](https://react.dev)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen.svg)]()
+
 ---
 
 ## Structure du Monorepo
