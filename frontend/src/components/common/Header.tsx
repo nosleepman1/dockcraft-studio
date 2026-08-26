@@ -4,7 +4,12 @@ import {
   Download, 
   FileCode, 
   Command, 
+<<<<<<< HEAD
   FolderSync
+=======
+  FolderSync,
+  Rocket
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useDockerStore } from '../../store/useDockerStore';
@@ -88,10 +93,27 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Right Controls: Theme Selector + Sync Disk + View Code + Export */}
       <div className="flex items-center space-x-2">
         <ThemeSelector />
 
+=======
+      {/* Right Controls: Theme Selector + Zero-Code Prod Pack + Sync Disk + View Code + Export */}
+      <div className="flex items-center space-x-2">
+        <ThemeSelector />
+
+        {/* Zero-Code Production Deployment Pack */}
+        <button
+          onClick={() => setActiveModal('production_deploy')}
+          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-cyan-500/20 hover:from-purple-500/30 hover:to-cyan-500/30 text-purple-300 border border-purple-500/30 transition-all shadow-sm active:scale-95"
+          title="Generate Zero-Code Production Deployment Pack"
+        >
+          <Rocket className="w-3.5 h-3.5 text-purple-400" />
+          <span className="hidden sm:inline">Prod Pack</span>
+        </button>
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
         <button
           onClick={() => setActiveModal('workspace_sync')}
           className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 transition-colors shadow-sm"

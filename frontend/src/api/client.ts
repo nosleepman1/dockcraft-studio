@@ -30,6 +30,32 @@ export interface DiskFilePayload {
   content: string;
 }
 
+<<<<<<< HEAD
+=======
+export interface ScanProjectResult {
+  projectName: string;
+  rootPath: string;
+  detectedStack: string;
+  detectedLanguages: string[];
+  detectedDatabases: string[];
+  services: DockerService[];
+  totalFilesScanned: number;
+}
+
+export interface ContainerStat {
+  id: string;
+  name: string;
+  cpuPerc: string;
+  memUsage: string;
+  memPerc: string;
+  netIO: string;
+  blockIO: string;
+  pids: string;
+  status: string;
+  timestamp: string;
+}
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 export const api = {
   // Health & System
   getHealth: async (): Promise<{ status: string; service: string }> => {
@@ -44,7 +70,11 @@ export const api = {
     return res.json();
   },
 
+<<<<<<< HEAD
   // Local File System Navigation & Injection
+=======
+  // Local File System Navigation, Injection & Scanner
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   getFSRoots: async (): Promise<FSDirEntry[]> => {
     const res = await fetch(`${API_BASE_URL}/fs/roots`);
     if (!res.ok) throw new Error('Failed to get FS roots');
@@ -94,6 +124,48 @@ export const api = {
     return res.json();
   },
 
+<<<<<<< HEAD
+=======
+  scanProjectDirectory: async (path: string): Promise<ScanProjectResult> => {
+    const res = await fetch(`${API_BASE_URL}/fs/scan-project`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to scan repository directory');
+    }
+    return res.json();
+  },
+
+  // Docker Live Stats & Container Controls
+  getContainerStats: async (): Promise<ContainerStat[]> => {
+    const res = await fetch(`${API_BASE_URL}/docker/stats`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  restartContainer: async (name: string): Promise<{ success: boolean; message: string }> => {
+    const res = await fetch(`${API_BASE_URL}/docker/container/restart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || `Failed to restart ${name}`);
+    }
+    return res.json();
+  },
+
+  getContainerLogs: async (name: string): Promise<{ container: string; logs: string }> => {
+    const res = await fetch(`${API_BASE_URL}/docker/container/logs?name=${encodeURIComponent(name)}`);
+    if (!res.ok) throw new Error(`Failed to fetch logs for ${name}`);
+    return res.json();
+  },
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   // Projects CRUD
   listProjects: async (): Promise<Project[]> => {
     const res = await fetch(`${API_BASE_URL}/projects`);

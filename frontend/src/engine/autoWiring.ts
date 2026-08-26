@@ -37,6 +37,7 @@ export function autoWireServices(
     }
   };
 
+<<<<<<< HEAD
   const getTargetEnv = (key: string, fallback: string = ''): string => {
     const found = updatedTarget.env.find(e => e.key === key);
     return found ? found.value : fallback;
@@ -48,6 +49,20 @@ export function autoWireServices(
       service.dependsOn.push({
         serviceId: targetId,
         condition: hasHealthCheck ? 'service_healthy' : 'service_started'
+=======
+  const getEnvValue = (service: DockerService, key: string, fallback: string = ''): string => {
+    const found = service.env.find(e => e.key === key);
+    return found ? found.value : fallback;
+  };
+
+  const addDependency = (consumer: DockerService, provider: DockerService) => {
+    const hasHealth = !!(provider.healthCheck && provider.healthCheck.enabled);
+    const exists = consumer.dependsOn.some(d => d.serviceId === provider.id);
+    if (!exists) {
+      consumer.dependsOn.push({
+        serviceId: provider.id,
+        condition: hasHealth ? 'service_healthy' : 'service_started'
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       });
     }
   };
@@ -55,6 +70,7 @@ export function autoWireServices(
   let connectionDescription = `Connected ${updatedSource.displayName} to ${updatedTarget.displayName}`;
   let relationType: WiringResult['relationType'] = 'generic';
 
+<<<<<<< HEAD
   // 1. BACKEND / APP -> DATABASE
   if (
     (updatedSource.category === 'backend' || updatedSource.category === 'custom') &&
@@ -166,6 +182,142 @@ export function autoWireServices(
     }
   }
 
+=======
+  // Identify Roles regardless of drag direction (Source <-> Target)
+  const isDB = (s: DockerService) => s.category === 'database';
+  const isBackend = (s: DockerService) => s.category === 'backend' || s.category === 'custom';
+  const isFrontend = (s: DockerService) => s.category === 'frontend';
+  const isGateway = (s: DockerService) => s.category === 'gateway';
+  const isQueue = (s: DockerService) => s.category === 'queue';
+  const isAI = (s: DockerService) => s.category === 'ai';
+
+  // 1. BACKEND <-> DATABASE (Any direction)
+  if ((isBackend(updatedSource) && isDB(updatedTarget)) || (isDB(updatedSource) && isBackend(updatedTarget))) {
+    const app = isBackend(updatedSource) ? updatedSource : updatedTarget;
+    const db = isDB(updatedSource) ? updatedSource : updatedTarget;
+    relationType = 'database';
+
+    addDependency(app, db);
+
+    if (db.image?.includes('postgres') || db.name.includes('postgres')) {
+      const dbUser = getEnvValue(db, 'POSTGRES_USER', 'postgres');
+      const dbPass = getEnvValue(db, 'POSTGRES_PASSWORD', 'postgres_secure_pass_123');
+      const dbName = getEnvValue(db, 'POSTGRES_DB', 'app_db');
+      const dbPort = db.ports[0]?.containerPort || 5432;
+
+      setEnv(app, 'DATABASE_URL', `postgresql://${dbUser}:${dbPass}@${db.name}:${dbPort}/${dbName}`, true, 'PostgreSQL Connection URL');
+      setEnv(app, 'DB_HOST', db.name, false, 'Database hostname in docker network');
+      setEnv(app, 'DB_PORT', String(dbPort), false, 'Database port');
+      setEnv(app, 'DB_USER', dbUser, false, 'Database username');
+      setEnv(app, 'DB_PASSWORD', dbPass, true, 'Database password');
+      setEnv(app, 'DB_NAME', dbName, false, 'Database name');
+      connectionDescription = `Configured PostgreSQL connection strings for ${app.displayName}`;
+    } 
+    else if (db.image?.includes('mysql') || db.image?.includes('mariadb') || db.name.includes('mysql')) {
+      const dbUser = getEnvValue(db, 'MYSQL_USER', 'app_user');
+      const dbPass = getEnvValue(db, 'MYSQL_PASSWORD', 'app_pass_secret');
+      const dbName = getEnvValue(db, 'MYSQL_DATABASE', 'app_db');
+      const dbPort = db.ports[0]?.containerPort || 3306;
+
+      setEnv(app, 'DATABASE_URL', `mysql://${dbUser}:${dbPass}@${db.name}:${dbPort}/${dbName}`, true, 'MySQL Connection URL');
+      setEnv(app, 'DB_HOST', db.name, false, 'MySQL Host');
+      setEnv(app, 'DB_PORT', String(dbPort), false, 'MySQL Port');
+      setEnv(app, 'DB_USER', dbUser, false, 'MySQL User');
+      setEnv(app, 'DB_PASSWORD', dbPass, true, 'MySQL Password');
+      setEnv(app, 'DB_NAME', dbName, false, 'MySQL Database');
+      connectionDescription = `Configured MySQL connection strings for ${app.displayName}`;
+    }
+    else if (db.image?.includes('mongo') || db.name.includes('mongo')) {
+      const dbUser = getEnvValue(db, 'MONGO_INITDB_ROOT_USERNAME', 'admin');
+      const dbPass = getEnvValue(db, 'MONGO_INITDB_ROOT_PASSWORD', 'admin_secret_pass');
+      const dbName = getEnvValue(db, 'MONGO_INITDB_DATABASE', 'app_db');
+      const dbPort = db.ports[0]?.containerPort || 27017;
+
+      setEnv(app, 'MONGODB_URI', `mongodb://${dbUser}:${dbPass}@${db.name}:${dbPort}/${dbName}?authSource=admin`, true, 'MongoDB Connection URI');
+      setEnv(app, 'MONGO_HOST', db.name, false, 'Mongo Host');
+      setEnv(app, 'MONGO_PORT', String(dbPort), false, 'Mongo Port');
+      connectionDescription = `Configured MongoDB connection URI for ${app.displayName}`;
+    }
+    else if (db.image?.includes('redis') || db.name.includes('redis')) {
+      const redisPort = db.ports[0]?.containerPort || 6379;
+      setEnv(app, 'REDIS_URL', `redis://:redis_secure_pass@${db.name}:${redisPort}/0`, true, 'Redis Cache URL');
+      setEnv(app, 'REDIS_HOST', db.name, false, 'Redis host');
+      setEnv(app, 'REDIS_PORT', String(redisPort), false, 'Redis port');
+      connectionDescription = `Configured Redis cache connection for ${app.displayName}`;
+    }
+  }
+
+  // 2. FRONTEND <-> BACKEND / API (Any direction)
+  else if ((isFrontend(updatedSource) && isBackend(updatedTarget)) || (isBackend(updatedSource) && isFrontend(updatedTarget))) {
+    const front = isFrontend(updatedSource) ? updatedSource : updatedTarget;
+    const back = isBackend(updatedSource) ? updatedSource : updatedTarget;
+    relationType = 'api';
+
+    const targetPort = back.ports[0]?.hostPort || back.ports[0]?.containerPort || 8000;
+    
+    setEnv(front, 'VITE_API_URL', `http://localhost:${targetPort}`, false, 'Vite API Base URL');
+    setEnv(front, 'NEXT_PUBLIC_API_URL', `http://localhost:${targetPort}`, false, 'Next.js Public API URL');
+    setEnv(front, 'API_INTERNAL_URL', `http://${back.name}:${back.ports[0]?.containerPort || 8000}`, false, 'Docker internal API endpoint for SSR');
+    
+    addDependency(front, back);
+    connectionDescription = `Configured API endpoints from ${front.displayName} to ${back.displayName}`;
+  }
+
+  // 3. GATEWAY <-> ANY SERVICE
+  else if (isGateway(updatedSource) || isGateway(updatedTarget)) {
+    const gw = isGateway(updatedSource) ? updatedSource : updatedTarget;
+    const target = isGateway(updatedSource) ? updatedTarget : updatedSource;
+    relationType = 'proxy';
+
+    addDependency(gw, target);
+    const targetPort = target.ports[0]?.containerPort || 80;
+    setEnv(gw, `UPSTREAM_${target.name.toUpperCase()}`, `http://${target.name}:${targetPort}`, false, `Upstream route for ${target.displayName}`);
+    connectionDescription = `Configured Gateway routing proxy to ${target.displayName}`;
+  }
+
+  // 4. BACKEND <-> QUEUE / BROKER
+  else if ((isBackend(updatedSource) && isQueue(updatedTarget)) || (isQueue(updatedSource) && isBackend(updatedTarget))) {
+    const app = isBackend(updatedSource) ? updatedSource : updatedTarget;
+    const q = isQueue(updatedSource) ? updatedSource : updatedTarget;
+    relationType = 'queue';
+
+    addDependency(app, q);
+
+    if (q.name.includes('rabbit') || q.image?.includes('rabbit')) {
+      const user = getEnvValue(q, 'RABBITMQ_DEFAULT_USER', 'rabbit_admin');
+      const pass = getEnvValue(q, 'RABBITMQ_DEFAULT_PASS', 'rabbit_pass_secure');
+      setEnv(app, 'RABBITMQ_URL', `amqp://${user}:${pass}@${q.name}:5672`, true, 'RabbitMQ AMQP connection string');
+      connectionDescription = `Configured RabbitMQ broker URL for ${app.displayName}`;
+    } else if (q.name.includes('kafka') || q.image?.includes('kafka')) {
+      setEnv(app, 'KAFKA_BROKERS', `${q.name}:9092`, false, 'Kafka bootstrap broker list');
+      connectionDescription = `Configured Kafka bootstrap broker address for ${app.displayName}`;
+    }
+  }
+
+  // 5. BACKEND <-> AI / VECTOR DB
+  else if ((isBackend(updatedSource) && isAI(updatedTarget)) || (isAI(updatedSource) && isBackend(updatedTarget))) {
+    const app = isBackend(updatedSource) ? updatedSource : updatedTarget;
+    const ai = isAI(updatedSource) ? updatedSource : updatedTarget;
+    relationType = 'ai';
+
+    addDependency(app, ai);
+
+    if (ai.name.includes('ollama') || ai.image?.includes('ollama')) {
+      setEnv(app, 'OLLAMA_BASE_URL', `http://${ai.name}:11434`, false, 'Ollama Local LLM Endpoint');
+      connectionDescription = `Configured Ollama local AI runtime for ${app.displayName}`;
+    } else if (ai.name.includes('qdrant') || ai.image?.includes('qdrant')) {
+      setEnv(app, 'QDRANT_URL', `http://${ai.name}:6333`, false, 'Qdrant Vector Database REST endpoint');
+      connectionDescription = `Configured Qdrant Vector search engine for ${app.displayName}`;
+    }
+  }
+
+  // 6. GENERIC FALLBACK (Any other 2 services connected by user)
+  else {
+    addDependency(updatedSource, updatedTarget);
+    connectionDescription = `Linked ${updatedSource.displayName} with ${updatedTarget.displayName}`;
+  }
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   return {
     updatedSource,
     updatedTarget,

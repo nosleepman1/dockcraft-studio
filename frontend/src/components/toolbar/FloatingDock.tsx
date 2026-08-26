@@ -9,9 +9,17 @@ import {
   Download, 
   ShieldCheck, 
   Upload, 
+<<<<<<< HEAD
   Loader2,
   FolderArchive,
   FolderSync
+=======
+  Loader2, 
+  FolderArchive, 
+  FolderSync,
+  FolderSearch,
+  Dices
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 } from 'lucide-react';
 import { useDockerStore } from '../../store/useDockerStore';
 import { runSecurityAndArchitectureAudit } from '../../engine/securityLinter';
@@ -29,7 +37,12 @@ export const FloatingDock: React.FC = () => {
     deployStackToDocker, 
     stopDockerStack,
     toggleTerminal,
+<<<<<<< HEAD
     isTerminalOpen
+=======
+    isTerminalOpen,
+    hardenAllStackSecretsAction
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   } = useDockerStore();
 
   const issues = runSecurityAndArchitectureAudit(services);
@@ -65,11 +78,28 @@ export const FloatingDock: React.FC = () => {
 
       <div className="w-px h-5 bg-theme-border mx-0.5" />
 
+<<<<<<< HEAD
+=======
+      {/* Auto-Discovery Scanner */}
+      <button
+        onClick={() => setActiveModal('scanner')}
+        className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-cyan-500/15 hover:from-emerald-500/25 hover:to-cyan-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all"
+        title="Auto-Detect Architecture from Local Folder (U)"
+      >
+        <FolderSearch className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Scan Repo</span>
+      </button>
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       {/* Workspace Disk Sync / Inject */}
       <button
         onClick={() => setActiveModal('workspace_sync')}
         className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition-colors"
+<<<<<<< HEAD
         title="Direct Disk Injection & Placement"
+=======
+        title="Direct Disk Injection & Placement (W)"
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       >
         <FolderSync className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">Sync Disk</span>
@@ -87,11 +117,27 @@ export const FloatingDock: React.FC = () => {
         <LayoutGrid className="w-4 h-4 text-purple-400" />
       </button>
 
+<<<<<<< HEAD
+=======
+      {/* Harden Secrets */}
+      <button
+        onClick={hardenAllStackSecretsAction}
+        className="p-2 rounded-xl text-theme-muted hover:text-emerald-400 hover:bg-theme-hover transition-colors"
+        title="Generate Cryptographically Secure Secrets for Stack"
+      >
+        <Dices className="w-4 h-4 text-emerald-400" />
+      </button>
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       {/* Templates */}
       <button
         onClick={() => setActiveModal('templates')}
         className="p-2 rounded-xl text-theme-muted hover:text-theme-text hover:bg-theme-hover transition-colors"
+<<<<<<< HEAD
         title="Architecture Templates"
+=======
+        title="Architecture Templates (T)"
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       >
         <Layers className="w-4 h-4 text-blue-400" />
       </button>
@@ -134,7 +180,11 @@ export const FloatingDock: React.FC = () => {
             ? 'bg-theme-accent/20 text-theme-accent border border-theme-accent/30'
             : 'text-theme-muted hover:text-theme-text hover:bg-theme-hover'
         }`}
+<<<<<<< HEAD
         title="Toggle Live Docker Console"
+=======
+        title="Toggle Live Docker Console (~)"
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       >
         <Terminal className="w-4 h-4" />
       </button>

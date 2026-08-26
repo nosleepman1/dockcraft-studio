@@ -9,6 +9,11 @@ import {
   ReactFlowProvider,
   NodeTypes,
   ConnectionLineType,
+<<<<<<< HEAD
+=======
+  Connection,
+  ConnectionMode,
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -60,6 +65,14 @@ const DockerCanvasInner: React.FC = () => {
     [screenToFlowPosition, addServiceFromCatalog]
   );
 
+<<<<<<< HEAD
+=======
+  const isValidConnection = useCallback((connection: Connection | any) => {
+    if (!connection.source || !connection.target) return true;
+    return connection.source !== connection.target;
+  }, []);
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   return (
     <div className="w-full h-full relative select-none bg-theme-bg">
       <ReactFlow
@@ -68,6 +81,11 @@ const DockerCanvasInner: React.FC = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+<<<<<<< HEAD
+=======
+        isValidConnection={isValidConnection}
+        connectionMode={ConnectionMode.Strict}
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
         nodeTypes={nodeTypes}
         onPaneClick={() => selectService(null)}
         onDragOver={onDragOver}
@@ -76,15 +94,27 @@ const DockerCanvasInner: React.FC = () => {
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}
         maxZoom={2}
+<<<<<<< HEAD
         connectionLineType={ConnectionLineType.SmoothStep}
         connectionLineStyle={{
           stroke: '#06B6D4',
           strokeWidth: 3,
+=======
+        connectionRadius={40}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineStyle={{
+          stroke: '#06B6D4',
+          strokeWidth: 3.5,
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
           strokeDasharray: '6 6'
         }}
         defaultEdgeOptions={{
           animated: true,
+<<<<<<< HEAD
           style: { strokeWidth: 2.5 },
+=======
+          style: { strokeWidth: 3.5 },
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
           type: 'smoothstep'
         }}
         deleteKeyCode={['Backspace', 'Delete']}

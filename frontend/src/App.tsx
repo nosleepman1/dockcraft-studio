@@ -9,6 +9,11 @@ import { TemplateGalleryModal } from './components/sidebar/TemplateGalleryModal'
 import { ImportComposeModal } from './components/importer/ImportComposeModal';
 import { ProjectsModal } from './components/sidebar/ProjectsModal';
 import { DockerHubModal } from './components/sidebar/DockerHubModal';
+<<<<<<< HEAD
+=======
+import { ProjectScannerModal } from './components/scanner/ProjectScannerModal';
+import { ProductionDeployModal } from './components/preview/ProductionDeployModal';
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 import { LiveLogConsole } from './components/terminal/LiveLogConsole';
 import { FloatingDock } from './components/toolbar/FloatingDock';
 import { CommandPalette } from './components/command/CommandPalette';
@@ -53,6 +58,12 @@ export const App: React.FC = () => {
       } else if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setActiveModal('templates');
+<<<<<<< HEAD
+=======
+      } else if (e.key.toLowerCase() === 'u' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setActiveModal('scanner');
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       } else if (e.key.toLowerCase() === 'w' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setActiveModal('workspace_sync');
@@ -101,6 +112,11 @@ export const App: React.FC = () => {
       <ToastContainer />
 
       {/* Global Modals */}
+<<<<<<< HEAD
+=======
+      <ProductionDeployModal />
+      <ProjectScannerModal />
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       <CodePreviewModal />
       <SecurityAuditModal />
       <TemplateGalleryModal />

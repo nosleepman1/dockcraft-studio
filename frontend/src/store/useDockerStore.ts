@@ -19,8 +19,14 @@ import { generateNginxConfig } from '../engine/nginxGenerator';
 import { generateEnvFiles } from '../engine/envGenerator';
 import { generateStartScriptSh, generateStartScriptPs1, generateReadmeMd } from '../engine/scriptGenerator';
 import { ThemeMode, applyTheme, getInitialTheme } from '../themes/themeConfig';
+<<<<<<< HEAD
 import { api, SystemStatus, DiskFilePayload } from '../api/client';
 import { LogMessage } from '../api/websocket';
+=======
+import { api, SystemStatus, DiskFilePayload, ScanProjectResult } from '../api/client';
+import { LogMessage } from '../api/websocket';
+import { hardenAllStackSecrets } from '../engine/secretsVault';
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 import { toast } from '../components/ui/Toast';
 
 interface DockerState {
@@ -53,10 +59,21 @@ interface DockerState {
   savedProjects: Project[];
 
   // Modals & Tabs
+<<<<<<< HEAD
   activeModal: 'preview' | 'templates' | 'import' | 'security' | 'projects' | 'dockerhub' | 'workspace_sync' | 'directory_picker' | null;
   activePreviewTab: 'compose' | 'dockerfile' | 'nginx' | 'env' | 'scripts' | 'readme';
   previewSelectedServiceId: string | null;
 
+=======
+  activeModal: 'preview' | 'templates' | 'import' | 'security' | 'projects' | 'dockerhub' | 'workspace_sync' | 'directory_picker' | 'scanner' | 'production_deploy' | null;
+  activePreviewTab: 'compose' | 'dockerfile' | 'nginx' | 'env' | 'scripts' | 'readme';
+  previewSelectedServiceId: string | null;
+
+  // Scanner & Secrets
+  applyScannedArchitecture: (result: ScanProjectResult) => void;
+  hardenAllStackSecretsAction: () => void;
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   // Dashboard & Multi-Project / Multi-Flow Actions
   openDashboard: () => void;
   closeDashboard: () => void;
@@ -131,11 +148,17 @@ const syncNodesAndEdges = (
   });
 
   const edges: DockerCanvasEdge[] = [];
+<<<<<<< HEAD
+=======
+  const edgeSet = new Set<string>();
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   services.forEach(sourceService => {
     sourceService.dependsOn.forEach(dep => {
       const targetService = services.find(s => s.id === dep.serviceId);
       if (targetService) {
         const edgeId = `e-${sourceService.id}-${targetService.id}`;
+<<<<<<< HEAD
         
         let strokeColor = '#3B82F6';
         if (targetService.category === 'database') strokeColor = '#10B981';
@@ -159,6 +182,38 @@ const syncNodesAndEdges = (
             relationType: targetService.category as any,
           }
         });
+=======
+        if (!edgeSet.has(edgeId)) {
+          edgeSet.add(edgeId);
+
+          let strokeColor = '#06B6D4'; // Bright Cyan
+          if (targetService.category === 'database') strokeColor = '#10B981'; // Emerald
+          else if (targetService.category === 'queue') strokeColor = '#F97316'; // Orange
+          else if (targetService.category === 'ai') strokeColor = '#A855F7'; // Purple
+          else if (sourceService.category === 'gateway') strokeColor = '#3B82F6'; // Blue
+
+          edges.push({
+            id: edgeId,
+            source: sourceService.id,
+            target: targetService.id,
+            type: 'smoothstep',
+            animated: true,
+            style: { 
+              stroke: strokeColor, 
+              strokeWidth: 3.5,
+            },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: strokeColor,
+              width: 22,
+              height: 22
+            },
+            data: {
+              relationType: targetService.category as any,
+            }
+          });
+        }
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       }
     });
   });
@@ -186,21 +241,52 @@ export const useDockerStore = create<DockerState>((set, get) => {
     }
   });
 
+<<<<<<< HEAD
   const initialNodes: DockerCanvasNode[] = [
     { id: 'svc_next', type: 'serviceNode', position: { x: 80, y: 150 }, data: { service: starterServices[0] } },
     { id: 'svc_api', type: 'serviceNode', position: { x: 460, y: 150 }, data: { service: starterServices[1] } },
     { id: 'svc_db', type: 'serviceNode', position: { x: 840, y: 60 }, data: { service: starterServices[2] } },
     { id: 'svc_redis', type: 'serviceNode', position: { x: 840, y: 280 }, data: { service: starterServices[3] } },
   ];
+=======
+  const initialNodes: DockerCanvasNode[] = starterServices.map((s, idx) => {
+    let x = 80;
+    let y = 150;
+    if (s.category === 'gateway') { x = 60; y = 150; }
+    else if (s.category === 'frontend') { x = 360; y = 150; }
+    else if (s.category === 'backend') { x = 680; y = 150; }
+    else if (s.category === 'database') { x = 1000; y = 80; }
+    else if (s.category === 'queue') { x = 1000; y = 280; }
+    else {
+      x = 100 + (idx % 3) * 320;
+      y = 100 + Math.floor(idx / 3) * 260;
+    }
+
+    return {
+      id: s.id,
+      type: 'serviceNode',
+      position: { x, y },
+      data: { service: s }
+    };
+  });
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 
   const { edges: initialEdges } = syncNodesAndEdges(starterServices, initialNodes, []);
 
   const defaultProjectPath = 'C:\\Users\\abash\\Desktop\\dockcraft-studio';
 
+<<<<<<< HEAD
   const defaultServiceFolders: Record<string, string> = {
     svc_next: 'frontend',
     svc_api: 'backend',
   };
+=======
+  const defaultServiceFolders: Record<string, string> = {};
+  starterServices.forEach(s => {
+    if (s.category === 'frontend') defaultServiceFolders[s.id] = 'frontend';
+    if (s.category === 'backend') defaultServiceFolders[s.id] = 'backend';
+  });
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
 
   const initialProject: Project = {
     id: 'proj_default',
@@ -264,6 +350,67 @@ export const useDockerStore = create<DockerState>((set, get) => {
     },
     closeDashboard: () => set({ isDashboardOpen: false }),
 
+<<<<<<< HEAD
+=======
+    applyScannedArchitecture: (result: ScanProjectResult) => {
+      const newId = `proj_${Date.now()}`;
+      const defaultFlow: ProjectFlow = {
+        id: 'dev',
+        name: 'development',
+        services: result.services,
+        targetProjectPath: result.rootPath,
+        serviceTargetFolders: {}
+      };
+
+      const newProj: Project = {
+        id: newId,
+        name: result.projectName,
+        description: `Auto-scanned: ${result.detectedStack}`,
+        activeFlowId: 'dev',
+        flows: [defaultFlow],
+        services: result.services,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const newNodes: DockerCanvasNode[] = result.services.map((s, idx) => ({
+        id: s.id,
+        type: 'serviceNode',
+        position: { x: 100 + (idx % 3) * 320, y: 100 + Math.floor(idx / 3) * 260 },
+        data: { service: s }
+      }));
+      const { edges } = syncNodesAndEdges(result.services, newNodes, []);
+
+      set(state => ({
+        currentProjectId: newId,
+        currentFlowId: 'dev',
+        projectName: result.projectName,
+        targetProjectPath: result.rootPath,
+        services: result.services,
+        nodes: newNodes,
+        edges,
+        savedProjects: [newProj, ...state.savedProjects],
+        selectedServiceId: null,
+      }));
+
+      get().autoLayout();
+      get().saveProjectToBackend();
+    },
+
+    hardenAllStackSecretsAction: () => {
+      const { services, nodes, edges } = get();
+      const hardened = hardenAllStackSecrets(services);
+      const synced = syncNodesAndEdges(hardened.services, nodes, edges);
+      set({
+        services: hardened.services,
+        nodes: synced.nodes,
+        edges: synced.edges,
+      });
+      get().saveProjectToBackend();
+      toast.success('Stack Hardened', `Generated ${hardened.count} cryptographically secure secrets`);
+    },
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
     createNewProject: (name, templateId) => {
       const newId = `proj_${Date.now()}`;
       let newServices: DockerService[] = [];
@@ -660,20 +807,56 @@ export const useDockerStore = create<DockerState>((set, get) => {
     },
 
     onEdgesChange: (changes) => {
+<<<<<<< HEAD
       set({
         edges: applyEdgeChanges(changes, get().edges),
       });
+=======
+      const currentEdges = get().edges;
+      const updatedEdges = applyEdgeChanges(changes, currentEdges);
+
+      const removedChanges = changes.filter(c => c.type === 'remove');
+      if (removedChanges.length > 0) {
+        const removedIds = new Set(removedChanges.map(c => (c as any).id));
+        const { services, nodes } = get();
+        const updatedServices = services.map(s => ({
+          ...s,
+          dependsOn: s.dependsOn.filter(dep => !removedIds.has(`e-${s.id}-${dep.serviceId}`))
+        }));
+        const synced = syncNodesAndEdges(updatedServices, nodes, updatedEdges);
+        set({
+          services: updatedServices,
+          nodes: synced.nodes,
+          edges: synced.edges,
+        });
+        get().saveProjectToBackend();
+        return;
+      }
+
+      set({ edges: updatedEdges });
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
     },
 
     onConnect: (connection: Connection) => {
       const { services, nodes, edges } = get();
       if (!connection.source || !connection.target || connection.source === connection.target) return;
 
+<<<<<<< HEAD
       const sourceService = services.find(s => s.id === connection.source);
       const targetService = services.find(s => s.id === connection.target);
 
       if (!sourceService || !targetService) return;
 
+=======
+      const sourceNode = nodes.find(n => n.id === connection.source);
+      const targetNode = nodes.find(n => n.id === connection.target);
+      const sourceService = services.find(s => s.id === connection.source) || (sourceNode?.data as any)?.service;
+      const targetService = services.find(s => s.id === connection.target) || (targetNode?.data as any)?.service;
+
+      if (!sourceService || !targetService) return;
+
+      // 1. Auto-wire variables and network
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       const { updatedSource, updatedTarget, connectionDescription } = autoWireServices(sourceService, targetService);
 
       const updatedServices = services.map(s => {
@@ -682,6 +865,7 @@ export const useDockerStore = create<DockerState>((set, get) => {
         return s;
       });
 
+<<<<<<< HEAD
       const synced = syncNodesAndEdges(updatedServices, nodes, edges);
 
       set({
@@ -691,6 +875,55 @@ export const useDockerStore = create<DockerState>((set, get) => {
       });
 
       toast.info('Auto-Wired Connection', connectionDescription);
+=======
+      // 2. Determine edge color
+      let strokeColor = '#06B6D4';
+      if (targetService.category === 'database' || sourceService.category === 'database') strokeColor = '#10B981';
+      else if (targetService.category === 'queue' || sourceService.category === 'queue') strokeColor = '#F97316';
+      else if (targetService.category === 'ai' || sourceService.category === 'ai') strokeColor = '#A855F7';
+      else if (sourceService.category === 'gateway' || targetService.category === 'gateway') strokeColor = '#3B82F6';
+
+      const edgeId = `e-${connection.source}-${connection.target}`;
+      
+      const newEdge: DockerCanvasEdge = {
+        id: edgeId,
+        source: connection.source,
+        target: connection.target,
+        type: 'smoothstep',
+        animated: true,
+        style: {
+          stroke: strokeColor,
+          strokeWidth: 3.5,
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: strokeColor,
+          width: 22,
+          height: 22
+        },
+        data: {
+          relationType: (targetService.category || 'generic') as any,
+        }
+      };
+
+      const existingEdgesFiltered = edges.filter(e => e.id !== edgeId);
+      const updatedEdges = [...existingEdgesFiltered, newEdge];
+
+      // 3. Update nodes with updated services
+      const updatedNodes = nodes.map(n => {
+        const found = updatedServices.find(s => s.id === n.id);
+        return found ? { ...n, data: { ...n.data, service: found } } : n;
+      });
+
+      set({
+        services: updatedServices,
+        nodes: updatedNodes,
+        edges: updatedEdges,
+      });
+
+      get().saveProjectToBackend();
+      toast.success('Connected & Auto-Wired', connectionDescription);
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
     },
 
     addServiceFromCatalog: (catalogItem, position) => {

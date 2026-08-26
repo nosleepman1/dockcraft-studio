@@ -83,6 +83,39 @@ export const CommandPalette: React.FC = () => {
   // Build items list
   const allItems: CommandItem[] = [
     {
+<<<<<<< HEAD
+=======
+      id: 'act_scan_repo',
+      category: 'Action',
+      title: 'Auto-Discovery: Scan Local Repository',
+      subtitle: 'Inspect local code manifests (package.json, requirements.txt, composer.json) to reverse-engineer architecture',
+      icon: Search,
+      iconColor: '#10B981',
+      badge: 'U',
+      action: () => setActiveModal('scanner')
+    },
+    {
+      id: 'act_harden_secrets',
+      category: 'Action',
+      title: 'Harden Secrets & Generate Crypto Keys',
+      subtitle: 'Replace weak or default secrets with 32/64-byte high-entropy tokens',
+      icon: Sparkles,
+      iconColor: '#F59E0B',
+      action: () => {
+        useDockerStore.getState().hardenAllStackSecretsAction();
+      }
+    },
+    {
+      id: 'act_dockerhub_search',
+      category: 'Action',
+      title: 'Search Docker Hub Registry',
+      subtitle: 'Discover and add public container images',
+      icon: Box,
+      iconColor: '#3B82F6',
+      action: () => setActiveModal('dockerhub')
+    },
+    {
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       id: 'act_sync_disk',
       category: 'Action',
       title: 'Sync & Inject Directly to Disk',

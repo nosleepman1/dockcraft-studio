@@ -77,6 +77,7 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
           : 'bg-theme-card/95 border border-theme-border/90 hover:border-theme-accent/60 hover:shadow-xl hover:scale-[1.01]'
       }`}
     >
+<<<<<<< HEAD
       {/* Target Handle (Left) - Inbound connections */}
       <Handle
         type="target"
@@ -104,6 +105,9 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
       />
 
       {/* Card Header */}
+=======
+      {/* 1. Card Header */}
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       <div className="p-3 border-b border-theme-border/60 flex items-center justify-between">
         <div className="flex items-center space-x-2.5 min-w-0">
           <div 
@@ -141,7 +145,11 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Card Body - Metrics & Pills */}
+=======
+      {/* 2. Card Body - Metrics & Pills */}
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono text-theme-muted">
         {/* Source image / dockerfile pill */}
         <div className="flex items-center gap-1.5 truncate mr-2">
@@ -166,7 +174,11 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Bottom Footer Info */}
+=======
+      {/* 3. Bottom Footer Info */}
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       <div className="px-3 py-1.5 border-t border-theme-border/40 flex items-center justify-between text-[9px] font-mono text-theme-muted">
         <div className="flex items-center gap-1.5">
           {service.env && service.env.length > 0 && (
@@ -184,6 +196,7 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Target Handle (Bottom) */}
       <Handle
         type="target"
@@ -208,6 +221,26 @@ export const CustomServiceNode = memo((props: NodeProps<DockerCanvasNode>) => {
         position={Position.Right}
         id="target-right"
         className="!w-4 !h-4 !bg-blue-500 !border-2 !border-theme-bg !opacity-0 !-right-2 pointer-events-none"
+=======
+      {/* 4. HANDLES PLACED AT THE VERY END OF DOM SO THEY ARE ALWAYS ON TOP OF CARD CONTENT (Z-INDEX 50) */}
+      
+      {/* Target Handle (Left - INBOUND) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-cyan-400 !border-2 !border-theme-bg shadow-xl !cursor-crosshair transition-transform hover:!scale-150 ring-2 ring-cyan-400/60 !z-50"
+        title="Drop connection wire here (Inbound link)"
+      />
+
+      {/* Source Handle (Right - OUTBOUND) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-theme-bg shadow-xl !cursor-crosshair transition-transform hover:!scale-150 ring-2 ring-blue-500/60 !z-50 animate-pulse"
+        title="Drag wire to connect with another container"
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
       />
     </div>
   );

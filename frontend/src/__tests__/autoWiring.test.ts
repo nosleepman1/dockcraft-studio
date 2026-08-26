@@ -60,6 +60,21 @@ describe('Auto-Wiring Engine', () => {
     ]);
   });
 
+<<<<<<< HEAD
+=======
+  it('should auto-wire even when dragging in reverse from PostgreSQL to Backend', () => {
+    const result = autoWireServices(mockPostgres, mockBackend);
+
+    expect(result.relationType).toBe('database');
+    const dbUrlVar = result.updatedTarget.env.find(e => e.key === 'DATABASE_URL');
+    expect(dbUrlVar).toBeDefined();
+    expect(dbUrlVar?.value).toBe('postgresql://dbadmin:secretpass123@postgres_db:5432/production_db');
+    expect(result.updatedTarget.dependsOn).toEqual([
+      { serviceId: 'svc_postgres', condition: 'service_healthy' }
+    ]);
+  });
+
+>>>>>>> bf34f7e (feat(frontend): implement visual ReactFlow canvas, magnetic glowing handles, bidirectional auto-wiring & live code generators)
   it('should auto-configure Frontend API URL when connecting Frontend to Backend', () => {
     const mockFrontend: DockerService = {
       id: 'svc_fe',
